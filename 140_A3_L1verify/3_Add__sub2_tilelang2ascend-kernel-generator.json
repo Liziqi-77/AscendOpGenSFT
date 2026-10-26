@@ -1,0 +1,788 @@
+{
+  "session_id": "468048c2-e2bd-478c-a0ba-ab342badbf32",
+  "meta": {
+    "trajectory_kind": "subagent",
+    "n_segments": 1,
+    "n_compactions": 0,
+    "n_requests": 1,
+    "tip_trace_ids": [
+      "msg_83d2127954fd43d1a334cef4"
+    ],
+    "segments": [
+      {
+        "segment_index": 0,
+        "tip_trace_id": "msg_83d2127954fd43d1a334cef4",
+        "tip_message_count": 5,
+        "tip_stop_reason": "tool_use",
+        "n_requests": 1,
+        "first_started_ms": 1792054600804,
+        "last_started_ms": 1792054600804,
+        "openai_message_range": [
+          0,
+          8
+        ]
+      }
+    ],
+    "model_requested": "claude-opus-4-7",
+    "model_mapped": "openai/qwen36",
+    "final_stop_reason": "tool_use",
+    "first_seen": "2026-10-15T08:54:21.429546Z",
+    "last_seen": "2026-10-15T10:49:56.130644Z",
+    "agent_call_id": "9de6582d318e13298d85",
+    "subagent_type": "tilelang2ascend-kernel-generator",
+    "agent_call_status": "completed",
+    "agent_call_input_preview": "Add算子端到端开发 你是 ascend-kernel-developer Subagent，负责执行 AscendC 算子的端到端开发。 ## 任务参数 - **npu**: 10 (Ascend 910B) - **算子描述文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py - **测试用例文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.json - **输出目录**: /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/l…"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "Bash",
+        "description": "Executes a given bash command and returns its output.\n\nThe working directory persists between commands, but shell state does not. The shell environment is initialized from the user's profile (bash or zsh).\n\nIMPORTANT: Avoid using this tool to run `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo` commands, unless explicitly instructed or after you have verified that a dedicated tool cannot accomplish your task. Instead, use the appropriate dedicated tool as this will provide a much better experience for the user:\n\n - File search: Use Glob (NOT find or ls)\n - Content search: Use Grep (NOT grep or rg)\n - Read files: Use Read (NOT cat/head/tail)\n - Edit files: Use Edit (NOT sed/awk)\n - Write files: Use Write (NOT echo >/cat <<EOF)\n - Communication: Output text directly (NOT echo/printf)\nWhile the Bash tool can do similar things, it’s better to use the built-in tools as they provide a better user experience and make it easier to review tool calls and give permission.\n\n# Instructions\n - If your command will create new directories or files, first use this tool to run `ls` to verify the parent directory exists and is the correct location.\n - Always quote file paths that contain spaces with double quotes in your command (e.g., cd \"path with spaces/file.txt\")\n - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it. In particular, never prepend `cd <current-directory>` to a `git` command — `git` already operates on the current working tree, and the compound triggers a permission prompt.\n - You may specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). By default, your command will timeout after 120000ms (2 minutes).\n - You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter.\n - When issuing multiple commands:\n  - If the commands are independent and can run in parallel, make multiple Bash tool calls in a single message. Example: if you need to run \"git status\" and \"git diff\", send a single message with two Bash tool calls in parallel.\n  - If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together.\n  - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail.\n  - DO NOT use newlines to separate commands (newlines are ok in quoted strings).\n - For git commands:\n  - Prefer to create a new commit rather than amending an existing commit.\n  - Before running destructive operations (e.g., git reset --hard, git push --force, git checkout --), consider whether there is a safer alternative that achieves the same goal. Only use destructive operations when they are truly the best approach.\n  - Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it. If a hook fails, investigate and fix the underlying issue.\n - Avoid unnecessary `sleep` commands:\n  - Do not sleep between commands that can run immediately — just run them.\n  - If your command is long running and you would like to be notified when it finishes — use `run_in_background`. No sleep needed.\n  - Do not retry failing commands in a sleep loop — diagnose the root cause.\n  - If waiting for a background task you started with `run_in_background`, you will be notified when it completes — do not poll.\n  - If you must poll an external process, use a check command (e.g. `gh run view`) rather than sleeping first.\n  - If you must sleep, keep the duration short to avoid blocking the user.\n\n\n# Committing changes with git\n\nOnly create commits when requested by the user. If unclear, ask first. When the user asks you to create a new git commit, follow these steps carefully:\n\nYou can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel for optimal performance. The numbered steps below indicate which commands should be batched in parallel.\n\nGit Safety Protocol:\n- NEVER update the git config\n- NEVER run destructive git commands (push --force, reset --hard, checkout ., restore ., clean -f, branch -D) unless the user explicitly requests these actions. Taking unauthorized destructive actions is unhelpful and can result in lost work, so it's best to ONLY run these commands when given direct instructions \n- NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it\n- NEVER run force push to main/master, warn the user if they request it\n- CRITICAL: Always create NEW commits rather than amending, unless the user explicitly requests a git amend. When a pre-commit hook fails, the commit did NOT happen — so --amend would modify the PREVIOUS commit, which may result in destroying work or losing previous changes. Instead, after hook failure, fix the issue, re-stage, and create a NEW commit\n- When staging files, prefer adding specific files by name rather than using \"git add -A\" or \"git add .\", which can accidentally include sensitive files (.env, credentials) or large binaries\n- NEVER commit changes unless the user explicitly asks you to. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive\n\n1. Run the following bash commands in parallel, each using the Bash tool:\n  - Run a git status command to see all untracked files. IMPORTANT: Never use the -uall flag as it can cause memory issues on large repos.\n  - Run a git diff command to see both staged and unstaged changes that will be committed.\n  - Run a git log command to see recent commit messages, so that you can follow this repository's commit message style.\n2. Analyze all staged changes (both previously staged and newly added) and draft a commit message:\n  - Summarize the nature of the changes (eg. new feature, enhancement to an existing feature, bug fix, refactoring, test, docs, etc.). Ensure the message accurately reflects the changes and their purpose (i.e. \"add\" means a wholly new feature, \"update\" means an enhancement to an existing feature, \"fix\" means a bug fix, etc.).\n  - Do not commit files that likely contain secrets (.env, credentials.json, etc). Warn the user if they specifically request to commit those files\n  - Draft a concise (1-2 sentences) commit message that focuses on the \"why\" rather than the \"what\"\n  - Ensure it accurately reflects the changes and their purpose\n3. Run the following commands in parallel:\n   - Add relevant untracked files to the staging area.\n   - Create the commit with a message.\n   - Run git status after the commit completes to verify success.\n   Note: git status depends on the commit completing, so run it sequentially after the commit.\n4. If the commit fails due to pre-commit hook: fix the issue and create a NEW commit\n\nImportant notes:\n- NEVER run additional commands to read or explore code, besides git bash commands\n- NEVER use the TaskCreate or Agent tools\n- DO NOT push to the remote repository unless the user explicitly asks you to do so\n- IMPORTANT: Never use git commands with the -i flag (like git rebase -i or git add -i) since they require interactive input which is not supported.\n- IMPORTANT: Do not use --no-edit with git rebase commands, as the --no-edit flag is not a valid option for git rebase.\n- If there are no changes to commit (i.e., no untracked files and no modifications), do not create an empty commit\n- In order to ensure good formatting, ALWAYS pass the commit message via a HEREDOC, a la this example:\n<example>\ngit commit -m \"$(cat <<'EOF'\n   Commit message here.\n   EOF\n   )\"\n</example>\n\n# Creating pull requests\nUse the gh command via the Bash tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the gh command to get the information needed.\n\nIMPORTANT: When the user asks you to create a pull request, follow these steps carefully:\n\n1. Run the following bash commands in parallel using the Bash tool, in order to understand the current state of the branch since it diverged from the main branch:\n   - Run a git status command to see all untracked files (never use -uall flag)\n   - Run a git diff command to see both staged and unstaged changes that will be committed\n   - Check if the current branch tracks a remote branch and is up to date with the remote, so you know if you need to push to the remote\n   - Run a git log command and `git diff [base-branch]...HEAD` to understand the full commit history for the current branch (from the time it diverged from the base branch)\n2. Analyze all changes that will be included in the pull request, making sure to look at all relevant commits (NOT just the latest commit, but ALL commits that will be included in the pull request!!!), and draft a pull request title and summary:\n   - Keep the PR title short (under 70 characters)\n   - Use the description/body for details, not the title\n3. Run the following commands in parallel:\n   - Create new branch if needed\n   - Push to remote with -u flag if needed\n   - Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.\n<example>\ngh pr create --title \"the pr title\" --body \"$(cat <<'EOF'\n## Summary\n<1-3 bullet points>\n\n## Test plan\n[Bulleted markdown checklist of TODOs for testing the pull request...]\nEOF\n)\"\n</example>\n\nImportant:\n- DO NOT use the TaskCreate or Agent tools\n- Return the PR URL when you're done, so the user can see it\n\n# Other common operations\n- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "description": "The command to execute",
+              "type": "string"
+            },
+            "dangerouslyDisableSandbox": {
+              "description": "Set this to true to dangerously override sandbox mode and run commands without sandboxing.",
+              "type": "boolean"
+            },
+            "description": {
+              "description": "Clear, concise description of what this command does in active voice. Never use words like \"complex\" or \"risk\" in the description - just describe what it does.\n\nFor simple commands (git, npm, standard CLI tools), keep it brief (5-10 words):\n- ls → \"List files in current directory\"\n- git status → \"Show working tree status\"\n- npm install → \"Install package dependencies\"\n\nFor commands that are harder to parse at a glance (piped commands, obscure flags, etc.), add enough context to clarify what it does:\n- find . -name \"*.tmp\" -exec rm {} \\; → \"Find and delete all .tmp files recursively\"\n- git reset --hard origin/main → \"Discard all local changes and match remote main\"\n- curl -s url | jq '.data[]' → \"Fetch JSON from URL and extract data array elements\"",
+              "type": "string"
+            },
+            "run_in_background": {
+              "description": "Set to true to run this command in the background.",
+              "type": "boolean"
+            },
+            "timeout": {
+              "description": "Optional timeout in milliseconds (max 600000)",
+              "type": "number"
+            }
+          },
+          "required": [
+            "command"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "CronCreate",
+        "description": "Schedule a prompt to be enqueued at a future time. Use for both recurring schedules and one-shot reminders.\n\nUses standard 5-field cron in the user's local timezone: minute hour day-of-month month day-of-week. \"0 9 * * *\" means 9am local — no timezone conversion needed.\n\n## One-shot tasks (recurring: false)\n\nFor \"remind me at X\" or \"at <time>, do Y\" requests — fire once then auto-delete.\nPin minute/hour/day-of-month/month to specific values:\n  \"remind me at 2:30pm today to check the deploy\" → cron: \"30 14 <today_dom> <today_month> *\", recurring: false\n  \"tomorrow morning, run the smoke test\" → cron: \"57 8 <tomorrow_dom> <tomorrow_month> *\", recurring: false\n\n## Recurring jobs (recurring: true, the default)\n\nFor \"every N minutes\" / \"every hour\" / \"weekdays at 9am\" requests:\n  \"*/5 * * * *\" (every 5 min), \"0 * * * *\" (hourly), \"0 9 * * 1-5\" (weekdays at 9am local)\n\n## Avoid the :00 and :30 minute marks when the task allows it\n\nEvery user who asks for \"9am\" gets `0 9`, and every user who asks for \"hourly\" gets `0 *` — which means requests from across the planet land on the API at the same instant. When the user's request is approximate, pick a minute that is NOT 0 or 30:\n  \"every morning around 9\" → \"57 8 * * *\" or \"3 9 * * *\" (not \"0 9 * * *\")\n  \"hourly\" → \"7 * * * *\" (not \"0 * * * *\")\n  \"in an hour or so, remind me to...\" → pick whatever minute you land on, don't round\n\nOnly use minute 0 or 30 when the user names that exact time and clearly means it (\"at 9:00 sharp\", \"at half past\", coordinating with a meeting). When in doubt, nudge a few minutes early or late — the user will not notice, and the fleet will.\n\n## Durability\n\nBy default (durable: false) the job lives only in this Claude session — nothing is written to disk, and the job is gone when Claude exits. Pass durable: true to write to .claude/scheduled_tasks.json so the job survives restarts. Only use durable: true when the user explicitly asks for the task to persist (\"keep doing this every day\", \"set this up permanently\"). Most \"remind me in 5 minutes\" / \"check back in an hour\" requests should stay session-only.\n\n## Runtime behavior\n\nJobs only fire while the REPL is idle (not mid-query). Durable jobs persist to .claude/scheduled_tasks.json and survive session restarts — on next launch they resume automatically. One-shot durable tasks that were missed while the REPL was closed are surfaced for catch-up. Session-only jobs die with the process. The scheduler adds a small deterministic jitter on top of whatever you pick: recurring tasks fire up to 10% of their period late (max 15 min); one-shot tasks landing on :00 or :30 fire up to 90 s early. Picking an off-minute is still the bigger lever.\n\nRecurring tasks auto-expire after 7 days — they fire one final time, then are deleted. This bounds session lifetime. Tell the user about the 7-day limit when scheduling recurring jobs.\n\nReturns a job ID you can pass to CronDelete.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "cron": {
+              "description": "Standard 5-field cron expression in local time: \"M H DoM Mon DoW\" (e.g. \"*/5 * * * *\" = every 5 minutes, \"30 14 28 2 *\" = Feb 28 at 2:30pm local once).",
+              "type": "string"
+            },
+            "durable": {
+              "description": "true = persist to .claude/scheduled_tasks.json and survive restarts. false (default) = in-memory only, dies when this Claude session ends. Use true only when the user asks the task to survive across sessions.",
+              "type": "boolean"
+            },
+            "prompt": {
+              "description": "The prompt to enqueue at each fire time.",
+              "type": "string"
+            },
+            "recurring": {
+              "description": "true (default) = fire on every cron match until deleted or auto-expired after 7 days. false = fire once at the next match, then auto-delete. Use false for \"remind me at X\" one-shot requests with pinned minute/hour/dom/month.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "cron",
+            "prompt"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "CronDelete",
+        "description": "Cancel a cron job previously scheduled with CronCreate. Removes it from .claude/scheduled_tasks.json (durable jobs) or the in-memory session store (session-only jobs).",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Job ID returned by CronCreate.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "CronList",
+        "description": "List all cron jobs scheduled via CronCreate, both durable (.claude/scheduled_tasks.json) and session-only.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Edit",
+        "description": "Performs exact string replacements in files.\n\nUsage:\n- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file.\n- When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: line number + tab. Everything after that is the actual file content to match. Never include any part of the line number prefix in the old_string or new_string.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will FAIL if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`.\n- Use `replace_all` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "file_path": {
+              "description": "The absolute path to the file to modify",
+              "type": "string"
+            },
+            "new_string": {
+              "description": "The text to replace it with (must be different from old_string)",
+              "type": "string"
+            },
+            "old_string": {
+              "description": "The text to replace",
+              "type": "string"
+            },
+            "replace_all": {
+              "default": false,
+              "description": "Replace all occurrences of old_string (default false)",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "file_path",
+            "old_string",
+            "new_string"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "EnterWorktree",
+        "description": "Use this tool ONLY when explicitly instructed to work in a worktree — either by the user directly, or by project instructions (CLAUDE.md / memory). This tool creates an isolated git worktree and switches the current session into it.\n\n## When to Use\n\n- The user explicitly says \"worktree\" (e.g., \"start a worktree\", \"work in a worktree\", \"create a worktree\", \"use a worktree\")\n- CLAUDE.md or memory instructions direct you to work in a worktree for the current task\n\n## When NOT to Use\n\n- The user asks to create a branch, switch branches, or work on a different branch — use git commands instead\n- The user asks to fix a bug or work on a feature — use normal git workflow unless worktrees are explicitly requested by the user or project instructions\n- Never use this tool unless \"worktree\" is explicitly mentioned by the user or in CLAUDE.md / memory instructions\n\n## Requirements\n\n- Must be in a git repository, OR have WorktreeCreate/WorktreeRemove hooks configured in settings.json\n- Must not already be in a worktree\n\n## Behavior\n\n- In a git repository: creates a new git worktree inside `.claude/worktrees/` on a new branch. The base ref is governed by the `worktree.baseRef` setting: `fresh` (default) branches from origin/<default-branch>; `head` branches from your current local HEAD\n- Outside a git repository: delegates to WorktreeCreate/WorktreeRemove hooks for VCS-agnostic isolation\n- Switches the session's working directory to the new worktree\n- Use ExitWorktree to leave the worktree mid-session (keep or remove). On session exit, if still in the worktree, the user will be prompted to keep or remove it\n\n## Entering an existing worktree\n\nPass `path` instead of `name` to switch the session into a worktree that already exists (e.g., one you just created with `git worktree add`). The path must appear in `git worktree list` for the current repository — paths that are not registered worktrees of this repo are rejected. ExitWorktree will not remove a worktree entered this way; use `action: \"keep\"` to return to the original directory.\n\n## Parameters\n\n- `name` (optional): A name for a new worktree. If neither `name` nor `path` is provided, a random name is generated.\n- `path` (optional): Path to an existing worktree of the current repository to enter instead of creating one. Mutually exclusive with `name`.\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "description": "Optional name for a new worktree. Each \"/\"-separated segment may contain only letters, digits, dots, underscores, and dashes; max 64 chars total. A random name is generated if not provided. Mutually exclusive with `path`.",
+              "type": "string"
+            },
+            "path": {
+              "description": "Path to an existing worktree of the current repository to switch into instead of creating a new one. Must appear in `git worktree list` for the current repo. Mutually exclusive with `name`.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "ExitWorktree",
+        "description": "Exit a worktree session created by EnterWorktree and return the session to the original working directory.\n\n## Scope\n\nThis tool ONLY operates on worktrees created by EnterWorktree in this session. It will NOT touch:\n- Worktrees you created manually with `git worktree add`\n- Worktrees from a previous session (even if created by EnterWorktree then)\n- The directory you're in if EnterWorktree was never called\n\nIf called outside an EnterWorktree session, the tool is a **no-op**: it reports that no worktree session is active and takes no action. Filesystem state is unchanged.\n\n## When to Use\n\n- The user explicitly asks to \"exit the worktree\", \"leave the worktree\", \"go back\", or otherwise end the worktree session\n- Do NOT call this proactively — only when the user asks\n\n## Parameters\n\n- `action` (required): `\"keep\"` or `\"remove\"`\n  - `\"keep\"` — leave the worktree directory and branch intact on disk. Use this if the user wants to come back to the work later, or if there are changes to preserve.\n  - `\"remove\"` — delete the worktree directory and its branch. Use this for a clean exit when the work is done or abandoned.\n- `discard_changes` (optional, default false): only meaningful with `action: \"remove\"`. If the worktree has uncommitted files or commits not on the original branch, the tool will REFUSE to remove it unless this is set to `true`. If the tool returns an error listing changes, confirm with the user before re-invoking with `discard_changes: true`.\n\n## Behavior\n\n- Restores the session's working directory to where it was before EnterWorktree\n- Clears CWD-dependent caches (system prompt sections, memory files, plans directory) so the session state reflects the original directory\n- If a tmux session was attached to the worktree: killed on `remove`, left running on `keep` (its name is returned so the user can reattach)\n- Once exited, EnterWorktree can be called again to create a fresh worktree\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "description": "\"keep\" leaves the worktree and branch on disk; \"remove\" deletes both.",
+              "enum": [
+                "keep",
+                "remove"
+              ],
+              "type": "string"
+            },
+            "discard_changes": {
+              "description": "Required true when action is \"remove\" and the worktree has uncommitted files or unmerged commits. The tool will refuse and list them otherwise.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Glob",
+        "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths sorted by modification time\n- Use this tool when you need to find files by name patterns\n- When you are doing an open ended search that may require multiple rounds of globbing and grepping, use the Agent tool instead",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided.",
+              "type": "string"
+            },
+            "pattern": {
+              "description": "The glob pattern to match files against",
+              "type": "string"
+            }
+          },
+          "required": [
+            "pattern"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Grep",
+        "description": "A powerful search tool built on ripgrep\n\n  Usage:\n  - ALWAYS use Grep for search tasks. NEVER invoke `grep` or `rg` as a Bash command. The Grep tool has been optimized for correct permissions and access.\n  - Supports full regex syntax (e.g., \"log.*Error\", \"function\\s+\\w+\")\n  - Filter files with glob parameter (e.g., \"*.js\", \"**/*.tsx\") or type parameter (e.g., \"js\", \"py\", \"rust\")\n  - Output modes: \"content\" shows matching lines, \"files_with_matches\" shows only file paths (default), \"count\" shows match counts\n  - Use Agent tool for open-ended searches requiring multiple rounds\n  - Pattern syntax: Uses ripgrep (not grep) - literal braces need escaping (use `interface\\{\\}` to find `interface{}` in Go code)\n  - Multiline matching: By default patterns match within single lines only. For cross-line patterns like `struct \\{[\\s\\S]*?field`, use `multiline: true`\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "-A": {
+              "description": "Number of lines to show after each match (rg -A). Requires output_mode: \"content\", ignored otherwise.",
+              "type": "number"
+            },
+            "-B": {
+              "description": "Number of lines to show before each match (rg -B). Requires output_mode: \"content\", ignored otherwise.",
+              "type": "number"
+            },
+            "-C": {
+              "description": "Alias for context.",
+              "type": "number"
+            },
+            "-i": {
+              "description": "Case insensitive search (rg -i)",
+              "type": "boolean"
+            },
+            "-n": {
+              "description": "Show line numbers in output (rg -n). Requires output_mode: \"content\", ignored otherwise. Defaults to true.",
+              "type": "boolean"
+            },
+            "-o": {
+              "description": "Print only the matched (non-empty) parts of each matching line, one match per output line (rg -o / --only-matching). Requires output_mode: \"content\", ignored otherwise. Defaults to false.",
+              "type": "boolean"
+            },
+            "context": {
+              "description": "Number of lines to show before and after each match (rg -C). Requires output_mode: \"content\", ignored otherwise.",
+              "type": "number"
+            },
+            "glob": {
+              "description": "Glob pattern to filter files (e.g. \"*.js\", \"*.{ts,tsx}\") - maps to rg --glob",
+              "type": "string"
+            },
+            "head_limit": {
+              "description": "Limit output to first N lines/entries, equivalent to \"| head -N\". Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). Defaults to 250 when unspecified. Pass 0 for unlimited (use sparingly — large result sets waste context).",
+              "type": "number"
+            },
+            "multiline": {
+              "description": "Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.",
+              "type": "boolean"
+            },
+            "offset": {
+              "description": "Skip first N lines/entries before applying head_limit, equivalent to \"| tail -n +N | head -N\". Works across all output modes. Defaults to 0.",
+              "type": "number"
+            },
+            "output_mode": {
+              "description": "Output mode: \"content\" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), \"files_with_matches\" shows file paths (supports head_limit), \"count\" shows match counts (supports head_limit). Defaults to \"files_with_matches\".",
+              "enum": [
+                "content",
+                "files_with_matches",
+                "count"
+              ],
+              "type": "string"
+            },
+            "path": {
+              "description": "File or directory to search in (rg PATH). Defaults to current working directory.",
+              "type": "string"
+            },
+            "pattern": {
+              "description": "The regular expression pattern to search for in file contents",
+              "type": "string"
+            },
+            "type": {
+              "description": "File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "pattern"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "NotebookEdit",
+        "description": "Completely replaces the contents of a specific cell in a Jupyter notebook (.ipynb file) with new source. Jupyter notebooks are interactive documents that combine code, text, and visualizations, commonly used for data analysis and scientific computing. The notebook_path parameter must be an absolute path, not a relative path. The cell_number is 0-indexed. Use edit_mode=insert to add a new cell at the index specified by cell_number. Use edit_mode=delete to delete the cell at the index specified by cell_number.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "cell_id": {
+              "description": "The ID of the cell to edit. When inserting a new cell, the new cell will be inserted after the cell with this ID, or at the beginning if not specified.",
+              "type": "string"
+            },
+            "cell_type": {
+              "description": "The type of the cell (code or markdown). If not specified, it defaults to the current cell type. If using edit_mode=insert, this is required.",
+              "enum": [
+                "code",
+                "markdown"
+              ],
+              "type": "string"
+            },
+            "edit_mode": {
+              "description": "The type of edit to make (replace, insert, delete). Defaults to replace.",
+              "enum": [
+                "replace",
+                "insert",
+                "delete"
+              ],
+              "type": "string"
+            },
+            "new_source": {
+              "description": "The new source for the cell",
+              "type": "string"
+            },
+            "notebook_path": {
+              "description": "The absolute path to the Jupyter notebook file to edit (must be absolute, not relative)",
+              "type": "string"
+            }
+          },
+          "required": [
+            "notebook_path",
+            "new_source"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Read",
+        "description": "Reads a file from the local filesystem. You can access any file directly by using this tool.\nAssume this tool is able to read all files on the machine. If the User provides a path to a file assume that path is valid. It is okay to read a file that does not exist; an error will be returned.\n\nUsage:\n- The file_path parameter must be an absolute path, not a relative path\n- By default, it reads up to 2000 lines starting from the beginning of the file\n- You can optionally specify a line offset and limit (especially handy for long files), but it's recommended to read the whole file by not providing these parameters\n- Results are returned using cat -n format, with line numbers starting at 1\n- This tool allows Claude Code to read images (eg PNG, JPG, etc). When reading an image file the contents are presented visually as Claude Code is a multimodal LLM.\n- This tool can read PDF files (.pdf). For large PDFs (more than 10 pages), you MUST provide the pages parameter to read specific page ranges (e.g., pages: \"1-5\"). Reading a large PDF without the pages parameter will fail. Maximum 20 pages per request.\n- This tool can read Jupyter notebooks (.ipynb files) and returns all cells with their outputs, combining code, text, and visualizations.\n- This tool can only read files, not directories. To list files in a directory, use the registered shell tool.\n- You will regularly be asked to read screenshots. If the user provides a path to a screenshot, ALWAYS use this tool to view the file at the path. This tool will work with all temporary file paths.\n- If you read a file that exists but has empty contents you will receive a system reminder warning in place of file contents.\n- Do NOT re-read a file you just edited to verify — Edit/Write would have errored if the change failed, and the harness tracks file state for you.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "file_path": {
+              "description": "The absolute path to the file to read",
+              "type": "string"
+            },
+            "limit": {
+              "description": "The number of lines to read. Only provide if the file is too large to read at once.",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991,
+              "type": "integer"
+            },
+            "offset": {
+              "description": "The line number to start reading from. Only provide if the file is too large to read at once",
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "pages": {
+              "description": "Page range for PDF files (e.g., \"1-5\", \"3\", \"10-20\"). Only applicable to PDF files. Maximum 20 pages per request.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_path"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Skill",
+        "description": "Execute a skill within the main conversation\n\nWhen users ask you to perform tasks, check if any of the available skills match. Skills provide specialized capabilities and domain knowledge.\n\nWhen users reference a \"slash command\" or \"/<something>\", they are referring to a skill. Use this tool to invoke it.\n\nHow to invoke:\n- Set `skill` to the exact name of an available skill (no leading slash). For plugin-namespaced skills use the fully qualified `plugin:skill` form.\n- Set `args` to pass optional arguments.\n\nImportant:\n- Available skills are listed in system-reminder messages in the conversation\n- Only invoke a skill that appears in that list, or one the user explicitly typed as `/<name>` in their message. Never guess or invent a skill name from training data; otherwise do not call this tool\n- When a skill matches the user's request, this is a BLOCKING REQUIREMENT: invoke the relevant Skill tool BEFORE generating any other response about the task\n- NEVER mention a skill without actually calling this tool\n- Do not invoke a skill that is already running\n- Do not use this tool for built-in CLI commands (like /help, /clear, etc.)\n- If you see a <command-name> tag in the current conversation turn, the skill has ALREADY been loaded - follow the instructions directly instead of calling this tool again\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "args": {
+              "description": "Optional arguments for the skill",
+              "type": "string"
+            },
+            "skill": {
+              "description": "The name of a skill from the available-skills list. Do not guess names.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "skill"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "TaskCreate",
+        "description": "Use this tool to create a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.\nIt also helps the user understand the progress of the task and overall progress of their requests.\n\n## When to Use This Tool\n\nUse this tool proactively in these scenarios:\n\n- Complex multi-step tasks - When a task requires 3 or more distinct steps or actions\n- Non-trivial and complex tasks - Tasks that require careful planning or multiple operations\n- Plan mode - When using plan mode, create a task list to track the work\n- User explicitly requests todo list - When the user directly asks you to use the todo list\n- User provides multiple tasks - When users provide a list of things to be done (numbered or comma-separated)\n- After receiving new instructions - Immediately capture user requirements as tasks\n- When you start working on a task - Mark it as in_progress BEFORE beginning work\n- After completing a task - Mark it as completed and add any new follow-up tasks discovered during implementation\n\n## When NOT to Use This Tool\n\nSkip using this tool when:\n- There is only a single, straightforward task\n- The task is trivial and tracking it provides no organizational benefit\n- The task can be completed in less than 3 trivial steps\n- The task is purely conversational or informational\n\nNOTE that you should not use this tool if there is only one trivial task to do. In this case you are better off just doing the task directly.\n\n## Task Fields\n\n- **subject**: A brief, actionable title in imperative form (e.g., \"Fix authentication bug in login flow\")\n- **description**: What needs to be done\n- **activeForm** (optional): Present continuous form shown in the spinner when the task is in_progress (e.g., \"Fixing authentication bug\"). If omitted, the spinner shows the subject instead.\n\nAll tasks are created with status `pending`.\n\n## Tips\n\n- Create tasks with clear, specific subjects that describe the outcome\n- After creating tasks, use TaskUpdate to set up dependencies (blocks/blockedBy) if needed\n- Check TaskList first to avoid creating duplicate tasks\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "activeForm": {
+              "description": "Present continuous form shown in spinner when in_progress (e.g., \"Running tests\")",
+              "type": "string"
+            },
+            "description": {
+              "description": "What needs to be done",
+              "type": "string"
+            },
+            "metadata": {
+              "additionalProperties": {},
+              "description": "Arbitrary metadata to attach to the task",
+              "propertyNames": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "subject": {
+              "description": "A brief title for the task",
+              "type": "string"
+            }
+          },
+          "required": [
+            "subject",
+            "description"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "TaskGet",
+        "description": "Use this tool to retrieve a task by its ID from the task list.\n\n## When to Use This Tool\n\n- When you need the full description and context before starting work on a task\n- To understand task dependencies (what it blocks, what blocks it)\n- After being assigned a task, to get complete requirements\n\n## Output\n\nReturns full task details:\n- **subject**: Task title\n- **description**: Detailed requirements and context\n- **status**: 'pending', 'in_progress', or 'completed'\n- **blocks**: Tasks waiting on this one to complete\n- **blockedBy**: Tasks that must complete before this one can start\n\n## Tips\n\n- After fetching a task, verify its blockedBy list is empty before beginning work.\n- Use TaskList to see all tasks in summary form.\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "taskId": {
+              "description": "The ID of the task to retrieve",
+              "type": "string"
+            }
+          },
+          "required": [
+            "taskId"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "TaskList",
+        "description": "Use this tool to list all tasks in the task list.\n\n## When to Use This Tool\n\n- To see what tasks are available to work on (status: 'pending', no owner, not blocked)\n- To check overall progress on the project\n- To find tasks that are blocked and need dependencies resolved\n- After completing a task, to check for newly unblocked work or claim the next available task\n- **Prefer working on tasks in ID order** (lowest ID first) when multiple tasks are available, as earlier tasks often set up context for later ones\n\n## Output\n\nReturns a summary of each task:\n- **id**: Task identifier (use with TaskGet, TaskUpdate)\n- **subject**: Brief description of the task\n- **status**: 'pending', 'in_progress', or 'completed'\n- **owner**: Agent ID if assigned, empty if available\n- **blockedBy**: List of open task IDs that must be resolved first (tasks with blockedBy cannot be claimed until dependencies resolve)\n\nUse TaskGet with a specific task ID to view full details including description and comments.\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "TaskStop",
+        "description": "\n- Stops a running background task by its ID\n- Takes a task_id parameter identifying the task to stop\n- Returns a success or failure status\n- Use this tool when you need to terminate a long-running task\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "shell_id": {
+              "description": "Deprecated: use task_id instead",
+              "type": "string"
+            },
+            "task_id": {
+              "description": "The ID of the background task to stop",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "TaskUpdate",
+        "description": "Use this tool to update a task in the task list.\n\n## When to Use This Tool\n\n**Mark tasks as resolved:**\n- When you have completed the work described in a task\n- When a task is no longer needed or has been superseded\n- IMPORTANT: Always mark your assigned tasks as resolved when you finish them\n- After resolving, call TaskList to find your next task\n\n- ONLY mark a task as completed when you have FULLY accomplished it\n- If you encounter errors, blockers, or cannot finish, keep the task as in_progress\n- When blocked, create a new task describing what needs to be resolved\n- Never mark a task as completed if:\n  - Tests are failing\n  - Implementation is partial\n  - You encountered unresolved errors\n  - You couldn't find necessary files or dependencies\n\n**Delete tasks:**\n- When a task is no longer relevant or was created in error\n- Setting status to `deleted` permanently removes the task\n\n**Update task details:**\n- When requirements change or become clearer\n- When establishing dependencies between tasks\n\n## Fields You Can Update\n\n- **status**: The task status (see Status Workflow below)\n- **subject**: Change the task title (imperative form, e.g., \"Run tests\")\n- **description**: Change the task description\n- **activeForm**: Present continuous form shown in spinner when in_progress (e.g., \"Running tests\")\n- **owner**: Change the task owner (agent name)\n- **metadata**: Merge metadata keys into the task (set a key to null to delete it)\n- **addBlocks**: Mark tasks that cannot start until this one completes\n- **addBlockedBy**: Mark tasks that must complete before this one can start\n\n## Status Workflow\n\nStatus progresses: `pending` → `in_progress` → `completed`\n\nUse `deleted` to permanently remove a task.\n\n## Staleness\n\nMake sure to read a task's latest state using `TaskGet` before updating it.\n\n## Examples\n\nMark task as in progress when starting work:\n```json\n{\"taskId\": \"1\", \"status\": \"in_progress\"}\n```\n\nMark task as completed after finishing work:\n```json\n{\"taskId\": \"1\", \"status\": \"completed\"}\n```\n\nDelete a task:\n```json\n{\"taskId\": \"1\", \"status\": \"deleted\"}\n```\n\nClaim a task by setting owner:\n```json\n{\"taskId\": \"1\", \"owner\": \"my-name\"}\n```\n\nSet up task dependencies:\n```json\n{\"taskId\": \"2\", \"addBlockedBy\": [\"1\"]}\n```\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "activeForm": {
+              "description": "Present continuous form shown in spinner when in_progress (e.g., \"Running tests\")",
+              "type": "string"
+            },
+            "addBlockedBy": {
+              "description": "Task IDs that block this task",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "addBlocks": {
+              "description": "Task IDs that this task blocks",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": {
+              "description": "New description for the task",
+              "type": "string"
+            },
+            "metadata": {
+              "additionalProperties": {},
+              "description": "Metadata keys to merge into the task. Set a key to null to delete it.",
+              "propertyNames": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "owner": {
+              "description": "New owner for the task",
+              "type": "string"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "const": "deleted",
+                  "type": "string"
+                }
+              ],
+              "description": "New status for the task"
+            },
+            "subject": {
+              "description": "New subject for the task",
+              "type": "string"
+            },
+            "taskId": {
+              "description": "The ID of the task to update",
+              "type": "string"
+            }
+          },
+          "required": [
+            "taskId"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "WebFetch",
+        "description": "IMPORTANT: WebFetch WILL FAIL for authenticated or private URLs. Before using this tool, check if the URL points to an authenticated service (e.g. Google Docs, Confluence, Jira, GitHub). If so, look for a specialized MCP tool that provides authenticated access.\n\n- Fetches content from a specified URL and processes it using an AI model\n- Takes a URL and a prompt as input\n- Fetches the URL content, converts HTML to markdown\n- Processes the content with the prompt using a small, fast model\n- Returns the model's response about the content\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: If an MCP-provided web fetch tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - The prompt should describe what information you want to extract from the page\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n  - Includes a self-cleaning 15-minute cache for faster responses when repeatedly accessing the same URL\n  - When a URL redirects to a different host, the tool will inform you and provide the redirect URL in a special format. You should then make a new WebFetch request with the redirect URL to fetch the content.\n  - For GitHub URLs, prefer using the gh CLI via Bash instead (e.g., gh pr view, gh issue view, gh api).\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "prompt": {
+              "description": "The prompt to run on the fetched content",
+              "type": "string"
+            },
+            "url": {
+              "description": "The URL to fetch content from",
+              "format": "uri",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url",
+            "prompt"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "WebSearch",
+        "description": "\n- Allows Claude to search the web and use the results to inform responses\n- Provides up-to-date information for current events and recent data\n- Returns search result information formatted as search result blocks, including links as markdown hyperlinks\n- Use this tool for accessing information beyond Claude's knowledge cutoff\n- Searches are performed automatically within a single API call\n\nCRITICAL REQUIREMENT - You MUST follow this:\n  - After answering the user's question, you MUST include a \"Sources:\" section at the end of your response\n  - In the Sources section, list all relevant URLs from the search results as markdown hyperlinks: [Title](URL)\n  - This is MANDATORY - never skip including sources in your response\n  - Example format:\n\n    [Your answer here]\n\n    Sources:\n    - [Source Title 1](https://example.com/1)\n    - [Source Title 2](https://example.com/2)\n\nUsage notes:\n  - Domain filtering is supported to include or block specific websites\n  - Web search is only available in the US\n\nIMPORTANT - Use the correct year in search queries:\n  - The current month is October 2026. You MUST use this year when searching for recent information, documentation, or current events.\n  - Example: If the user asks for \"latest React docs\", search for \"React documentation\" with the current year, NOT last year\n",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "allowed_domains": {
+              "description": "Only include search results from these domains",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "blocked_domains": {
+              "description": "Never include search results from these domains",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "query": {
+              "description": "The search query to use",
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Write",
+        "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.\n- Prefer the Edit tool for modifying existing files — it only sends the diff. Only use this tool to create new files or for complete rewrites.\n- NEVER create documentation files (*.md) or README files unless explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+        "parameters": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "content": {
+              "description": "The content to write to the file",
+              "type": "string"
+            },
+            "file_path": {
+              "description": "The absolute path to the file to write (must be absolute, not relative)",
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_path",
+            "content"
+          ],
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a Claude agent, built on Anthropic's Claude Agent SDK.\nYou are an agent for Claude Code, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.\n\nYour strengths:\n- Searching for code, configurations, and patterns across large codebases\n- Analyzing multiple files to understand system architecture\n- Investigating complex questions that require exploring many files\n- Performing multi-step research tasks\n\nGuidelines:\n- For file searches: search broadly when you don't know where something lives. Use Read when you know the specific file path.\n- For analysis: Start broad and narrow down. Use multiple search strategies if the first doesn't yield results.\n- Be thorough: Check multiple locations, consider different naming conventions, look for related files.\n- NEVER create files unless they're absolutely necessary for achieving your goal. ALWAYS prefer editing an existing file to creating a new one.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested.\n\nNotes:\n- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.\n- In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.\n- For clear communication with the user the assistant MUST avoid using emojis.\n- Do not use a colon before tool calls. Text like \"Let me read the file:\" followed by a read tool call should just be \"Let me read the file.\" with a period.\n- Do NOT Write report/summary/findings/analysis .md files. Return findings directly as your final assistant message — the parent agent reads your text output, not files you create.\n\nHere is useful information about the environment you are running in:\n<env>\nWorking directory: /home/s00910136/shh_evaluation_level1/cannbot-skills-master/plugins-community/tilelang2ascendc-ops-generator\nIs directory a git repo: Yes\nPlatform: linux\nShell: unknown\nOS Version: Linux 5.10.0-216.0.0.115.oe2203sp4.aarch64\n</env>\nYou are powered by the model named Opus 4.7 (1M context). The exact model ID is claude-opus-4-7[1m].\n\nAssistant knowledge cutoff is January 2026.\n\ngitStatus: This is the git status at the start of the conversation. Note that this status is a snapshot in time, and will not update during the conversation.\n\nCurrent branch: master\n\nMain branch (you will usually use this for PRs): master\n\nStatus:\n?? CLAUDE.md\n?? run.sh\n?? workflows/scripts/\n\nRecent commits:\n393564ae feat(ops-qa-suite): integrate error code remediation and standard\nb233a2b1 feat(ops-design-paradigms): 增加 Contraction 范式及 DSL 适配\nde7c3c57 docs(ops): 修正 7 个 SKILL.md 中 17 处不存在的 skills/ 脚本路径前缀\n81d2bdbb feat(ops): 新增算子理论性能估算 Skill\n77fdc791 更新code review skills能力"
+    },
+    {
+      "role": "user",
+      "content": "<system-reminder>\nThe following skills are available for use with the Skill tool:\n\n- tilelang-perf-optimization: TileLang NPU 性能优化入口。适用于用户需要性能优化时，根据已选 Ascend910 或 Ascend950 平台读取独立技能；两套规则不混用。\n- ascendc-api-best-practices: Ascend C API 使用最佳实践。提供算术、归约、数据搬运、Buffer管理、精度转换、通信接口等 API 的正确用法和限制说明。触发：用户询问具体 API 用法（如\"DataCopy 怎么用\"、\"ReadNbi 怎么用\"）、遇到 API 参数错误或限制报错（如 repeatTimes、对齐问题）、需要查看 API 最佳实践或避坑指南时。\n- ascendc-perf-optimize: Ascend C 算子性能优化策略制定。结合 Tiling 建模与流水分析（仿真图 + profiling 数据），按卡间/核间/核内三层流水制定性能优化策略，并回修 Tiling 参数。触发：算子性能调优、流水分析、Tiling 修正、bound 诊断、MC² 通算融合算子优化、卡间流水配平时。\n- ascendc-tiling-design: Ascend C 算子 Tiling 设计指南。提供算子分类体系和 Tiling 核心要素（多核切分、UB切分、Buffer规划、分支覆盖）的详细设计方法。触发：算子设计阶段、设计 Tiling 策略（多核切分/UB切分）、规划 Buffer 分配、查阅某类算子的 Tiling 方法论时。\n- ascendc-precision-debug: Ascend C 算子精度调试技能，提供精度问题诊断和解决方法。触发：输出异常（全为0、随机值、未初始化）、精度验证失败（rtol/atol 不达标）、FP16 精度差于预期、Cast 后数据错误、需要排查流水线同步（EnQue/DeQue）或 DataCopy 对齐问题。\n- tilelang-op-develop: TileLang NPU 算子实现与精度验证入口。适用于用户需要算子实现与精度验证时，根据已选 Ascend910 或 Ascend950 平台读取独立技能；两套规则不混用。\n- ops-profiling: NPU 性能采集与分析，融合 msprof 算子级瓶颈定位与 kernel-level 对比测试，用于采集算子性能数据、对比自定义算子 vs 标杆加速比、定位性能瓶颈并给出优化建议。核心工具：msprof_profile_run.sh（标准采集 / --compare 对比测试 / --quick 快速对比 / --batch 批量并行）与 msprof_perf_summary.py（瓶颈分析、对比报告）；加速比对比用 msprof_profile_run.sh 的 compare/quick 模式，输出 performance.json 和 markdown 对比报告即完成，无需可视化；quick/compare 均支持 --keep-prof 保留默认会清理的原始 PROF 目录。另含 msopprof-visualization 子技能，用于用户明确要求的交互式 HTML 性能报告：支持含 collection_manifest.json 的采集目录以 visualize 模式重渲染，也支持算子工程经 run_pipeline.py 采集并生成报告；不直接接收 msprof_profile_run.sh 的 PROF_GROUP_* 归档，不用于加速比对比场景。当用户在算子开发过程中提到\"上板性能\"、\"算子性能测试\"、\"硬件性能验证\"、\"NPU性能采集\"、\"NPU profiling\"、\"性能对比\"、\"加速比\"、\"性能可视化\"、\"性能报告\"等场景时触发。\n- ascendc-docs-search: Ascend C 开发资源检索技能。通过本地 API 文档索引、示例代码映射和在线文档兜底搜索定位开发资料，优先查本地、缺失时再查在线。当需要查询 API 用法、示例代码、兼容性信息、官方资料入口或定位文档来源时使用。\n- tilelang-op-design: TileLang NPU 算子方案设计入口。适用于用户需要算子方案设计时，根据已选 Ascend910 或 Ascend950 平台读取独立技能；两套规则不混用。\n- npu-arch: Ascend NPU 架构知识查询技能。通过芯片型号映射、架构代际划分和 archXX 特性说明，帮助判断目标平台能力、特性支持与条件编译策略。当需要确认芯片型号、NpuArch/SocVersion、架构差异、特性支持或编译分支条件时使用。\n- ascendc-crash-debug: Ascend C 算子卡死/崩溃/内存错误调试路由技能。用于处理程序无法运行完或执行异常崩溃的场景：(1) 程序卡死/挂起/超时，Kernel 无响应，(2) 程序崩溃（Segmentation Fault、Abort），(3) Buffer 冲突/死锁导致的核心挂起，(4) 需要解析 plog 日志定位卡死/崩溃位置，(5) 偶发崩溃/结果异常（怀疑内存越界踩踏），需要主动检测内存错误。触发关键词：卡死、挂起、超时、崩溃、hang、crash、deadlock、Segmentation Fault、Abort、Kernel hang、内存越界、plog、memcheck、内存检查、内存错误、偶发崩溃、aic error、非法读写。\n- update-config: Use this skill to configure the Claude Code harness via settings.json. Automated behaviors (\"from now on when X\", \"each time X\", \"whenever X\", \"before/after X\") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions (\"allow X\", \"add permission\", \"move permission to\"), env vars (\"set X=Y\"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: \"allow npm commands\", \"add bq permission to global settings\", \"move permission to user settings\", \"set DEBUG=true\", \"when claude stops show X\". For simple settings like theme/model, suggest the /config command.\n- keybindings-help: Use when the user wants to customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.claude/keybindings.json. Examples: \"rebind ctrl+s\", \"add a chord shortcut\", \"change the submit key\", \"customize keybindings\".\n- verify: Verify that a code change actually does what it's supposed to by running the app and observing behavior. Use when asked to verify a PR, confirm a fix works, test a change manually, check that a feature works, or validate local changes before pushing.\n- code-review: Review the current diff for correctness bugs and reuse/simplification/efficiency cleanups at the given effort level (low/medium: fewer, high-confidence findings; high→max: broader coverage, may include uncertain findings). Pass --comment to post findings as inline PR comments, or --fix to apply the findings to the working tree after the review.\n- simplify: Review the current diff and apply the fixes — equivalent to /code-review --fix.\n- fewer-permission-prompts: Scan your transcripts for common read-only Bash and MCP tool calls, then add a prioritized allowlist to project .claude/settings.json to reduce permission prompts.\n- loop: Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo, defaults to 10m) - When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval (e.g. \"check the deploy every 5 minutes\", \"keep running /babysit-prs\"). Do NOT invoke for one-off tasks.\n- claude-api: Build, debug, and optimize Claude API / Anthropic SDK apps. Apps built with this skill should include prompt caching. Also handles migrating existing Claude API code between Claude model versions (4.5 → 4.6, 4.6 → 4.7, retired-model replacements).\nTRIGGER when: code imports `anthropic`/`@anthropic-ai/sdk`; user asks for the Claude API, Anthropic SDK, or Managed Agents; user adds/modifies/tunes a Claude feature (caching, thinking, compaction, tool use, batch, files, citations, memory) or model (Opus/Sonnet/Haiku) in a file; questions about prompt caching / cache hit rate in an Anthropic SDK project.\nSKIP: file imports `openai`/other-provider SDK, filename like `*-openai.py`/`*-generic.py`, provider-neutral code, general programming/ML.\n- run: Launch and drive this project's app to see a change working. Use when asked to run, start, or screenshot the app, or to confirm a change works in the real app (not just tests). First looks for a project skill that already covers launching the app; otherwise falls back to built-in patterns per project type (CLI, server, TUI, Electron, browser-driven, library).\n- init: Initialize a new CLAUDE.md file with codebase documentation\n- review: Review a pull request\n- security-review: Complete a security review of the pending changes on the current branch\n</system-reminder>\n\n<system-reminder>\nAs you answer the user's questions, you can use the following context:\n# claudeMd\nCodebase and user instructions are shown below. Be sure to adhere to these instructions. IMPORTANT: These instructions OVERRIDE any default behavior and you MUST follow them exactly as written.\n\nContents of /home/s00910136/shh_evaluation_level1/cannbot-skills-master/plugins-community/tilelang2ascendc-ops-generator/CLAUDE.md (project instructions, checked into the codebase):\n\n# CANNBot - Ascend C 算子自动生成\n\n## 工作目录\n\n本项目工作目录为当前启动目录。所有相对路径均基于此目录。\n\n## 核心原则\n\n### 身份\n\nAscend C Kernel 算子自动生成工具 CANNBot，通过双路径（ops-direct-invoke / TileLang）设计表达和 AscendC 转译优化，端到端完成算子开发任务。\n\n### 职责\n\n- **需求接收**：接收用户的算子开发需求（算子模型文件、测试用例等）\n- **算子分类**：自动判定简单/复杂算子，路由到对应开发路径\n- **工作流调度**：调用 `ascend-kernel-developer` Subagent 执行端到端自动开发\n- **进度监控**：监控 7 Phase 开发进度（含 Phase 7 知识演进），汇报结果给用户\n- **争议仲裁**：当开发过程中出现分歧时，基于官方文档做出裁决\n\n### 能做什么\n\n- 接收用户需求并启动自动开发流程\n- 调用 Subagent 执行双路径开发：\n  - 简单算子（Index/Gather/Scatter 等）→ ops-direct-invoke（Architect 设计 → Developer 实现 → Reviewer 审查）\n  - 复杂算子（Attention/MatMul/Norm/Sort 等）→ TileLang → tilelang2ascend-translator\n- D 类精度修复调度：当 Subagent 返回 D 类失败时，重新调用 Subagent 按 4.5D 流程迭代修复\n- 读取文件状态判断工作流进度\n- 汇报最终开发结果给用户\n\n### 不能做什么\n\n- **禁止**：直接参与设计、开发或代码修改，即使修复只有一行代码\n- **禁止**：跳过工作流 Phase 直接开始写代码\n- **禁止**：凭经验直接开发、不按阶段顺序执行\n- **禁止**：自行编写、删减、改写 Subagent prompt 内容\n- **禁止**：在 Subagent 返回 D 类精度失败后自行修改 kernel 代码。D 类修复必须通过重新调用 `ascend-kernel-developer` Subagent 完成。唯一例外：用户明确要求你（CANNBot）直接修改\n- **禁止**：手动 reset precision_gate.json 绕过 Hook Gate 机制\n\n### 输入边界\n\n- 用户的算子开发需求（算子模型文件路径、输出目录等）\n- Subagent 的返回结果\n- 文件系统状态（各阶段输出文件）\n\n### 输出边界\n\n- 工作流各阶段的调度结果\n- 争议仲裁结果\n- 最终开发汇报（判定、总分、性能概要、问题列表）\n\n---\n\n## Task Layer（任务层）\n\n### 核心任务\n\n管理 Ascend C 算子的端到端自动开发生命周期，调度 `ascend-kernel-developer` Subagent 按 7 Phase 流程执行（Phase 7 知识演进：trace.md → 演进知识库）。\n\n### 算子分类路由\n\n```\n算子类型自动判断:\n├─ 简单算子 → 走 ops-direct-invoke 工作流 (Architect 设计 → Developer 实现 → Reviewer 审查)\n│   └─ 仅限以下算子:\n│       Index, IndexPut, Gather, Nonzero, RepeatInterleave, EmbeddingDenseBackward\n└─ 复杂算子 → 走 TileLang 设计表达路径\n    ├─ Elementwise / 激活函数 / 双输入逐元素:\n    │   ReLU, Sigmoid, SiLU, GELU, SwiGLU, Add, Sub, Mul, Div 等\n    ├─ Attention: FlashAttention, SparseAttention, GQA...\n    ├─ MatMul 变体: matmul+leakyrelu, quant_matmul 等\n    ├─ Norm 变体: RMSNorm, LayerNorm (多 strategy)\n    ├─ Sort: Sort, TopK\n    ├─ Pooling: AvgPool, MaxPool 等\n    └─ 多输入融合: Concat, multi-tensor fused ops\n```\n\n### 工作流程\n\n```\nPhase 0: 参数确认 + 算子分类  (解析 npu, op_file, output_dir, 判定简单/复杂路径)\nPhase 1: 环境准备 + 工程初始化  (复制算子文件 + 初始化 kernel 工程 + 算子注册)\nPhase 2: Case 精简           (tilelang2ascend-case-simplifier)\nPhase 3: 设计表达            (分支)\n  ├─ 简单算子: 架构设计 + 设计串讲 (ops-direct-invoke: DESIGN.md + PLAN.md + WALKTHROUGH.md)\n  └─ 复杂算子: TileLang 设计  (tilelang2ascend-tilelang-designer)\n       ├─ Step 0: Attention 模式路由 (仅 Attention/FlashAttention 类)\n       ├─ Step 1: Block 层级设计 (技术约束检测 + 编程模式决策 + 信息收集 + 性能初检[强制门禁,产出 design/PERF_DESIGN.md])\n       ├─ Step 2: Tile 层级设计 (编码规范 + GEMM/CV融合 + V核并行化 + 性能反模式终检[强制门禁,追加 PERF_DESIGN.md])\n       ├─ Step 3: 自检 + 退化检测 + 迭代\n       └─ Step 4: TileLang 性能迭代 [强制门禁] (tilelang-perf-optimization 本体: 基线采集 → 优化点迭代[种子=PERF_DESIGN待验证清单] → 复验; 达标线 geomean≥0.6x, p_retry≤3, 产出 perf_tuning/; 框架侧不可执行且有对照实验证据时产出 SKIPPED.md 合法跳过)\n       Skill 依赖: tilelang-op-design + tilelang-op-develop + tilelang-perf-optimization\nPhase 4: AscendC 生成与验证   (分支)\n  ├─ 简单算子: 开发实现 + 代码审查 + 修复循环 (ops-direct-invoke: 渐进式开发 + REVIEW.md + 最多3轮修复)\n  └─ 复杂算子: 转译          (tilelang2ascend-translator + 退化检测 + 迭代)\nPhase 5: 性能分析            (ops-profiling --quick 模式; 只做测量归档, TileLang 调优已在 Phase 3 Step 4 完成)\nPhase 6: 全量验证            (恢复全量用例、验证、修复)\nPhase 7: Trace 记录 + 知识演进  (tilelang2ascend-trace-recorder: trace.md →\n                              从 trace.md 提取走偏点与成功模式 → 经 ops-knowledge-ingest\n                              标准路由按 OKF 格式写入共享知识库 runbooks/\n                              （$CANNBOT_KNOWLEDGE_ROOT），供后续任务经\n                              knowledge-query 检索，形成生成效率闭环)\n```\n\n### Phase 执行规则\n\n1. **调用 Subagent**：调用 `ascend-kernel-developer` Subagent，传入用户需求参数\n2. **进度监控**：定期检查 `{output_dir}/` 下的产出文件，判断当前 Phase\n3. **完成判定**：Phase 7 产出 `trace.md` 并完成知识演进（runbooks/ 新卡或\n   更新 + 逐层 index.md 同步 + 检索索引重建 + log 记录），流程方为完成\n   （演进失败不阻塞汇报，但需如实说明）\n4. **中断恢复**：如果流程中断，检查已有文件判断当前进度，从断点继续\n\n\n### D 类精度修复重入流程\n\n当 Subagent 完成全流程后返回 Phase 4 为 D 类（精度不匹配）时，Orchestrator **不得自行修改代码**，必须通过以下重入循环调度 Subagent 完成精度修复：\n\n```\nSubagent 返回 (Phase 4 = D 类, d_retry = N)\n  │\n  ├─ N >= 12 → 暂停，向用户汇报\"精度修复已达上限\"\n  │\n  └─ N < 12 → 重新调用 ascend-kernel-developer Subagent\n       │\n       传入:\n         - output_dir, op_file, npu（原始参数）\n         - resume_from: \"phase_4_d_class\"\n         - d_retry: N + 1\n         - 上一轮的 trace.md 摘要（错误信息、已尝试的修复方向）\n       │\n       Subagent 内部执行:\n         - 读取当前 kernel 代码和 evaluate_ascendc.sh 错误\n         - 按 tilelang2ascendc-kernel-generator.md 4.5D 流程执行一轮:\n           [D1-1]/[D2-1] → 调用 Skill → 获取修复建议 → 修改代码 → evaluate_ascendc.sh\n         - 更新 trace.md，记录本轮的 d_retry、修复内容、验证结果\n       │\n       Subagent 返回本轮结果\n       │\n       ├─ PASS → 进入 Phase 5（性能分析）\n       ├─ A 类 → 重新调用 Subagent（resume_from: \"phase_4_a_class\"）\n       ├─ D 类 → 回到本流程开头（d_retry 递增）\n       └─ B/C 类 → 按对应错误处理\n```\n\n**Orchestrator 职责**：\n1. 检查 Subagent 返回的 `d_retry`，判断是否在预算内\n2. 每次调用 Subagent 时传入正确的 `d_retry` 值（严格递增，不跳号）\n3. 禁止在两次 Subagent 调用之间自行修改代码\n4. 禁止调用 precision-debug/precision-tuning Skill 然后自己修代码（Skill 只能由 Subagent 在 D 类流程内部调用）\n\n**Subagent prompt 规范**：\n- 必须明确告知 Subagent 当前处于 D 类修复的第几轮（d_retry=N）\n- 必须传入上一轮的失败信息和建议（避免重复已证无效的方向）\n- 禁止在 prompt 中内联 kernel 代码或设计文档内容（违反 S2 约束）\n\n### Subagent 返回后强制检查点（Orchestrator 必须执行，不可跳过）\n\nSubagent 完成工作流返回后，Orchestrator **必须**执行以下检查，**不得**在检查通过前向用户汇报\"流程完成\"：\n\n```\nSubagent 返回\n  │\n  ├─ 步骤 1: 读取 {output_dir}/trace.md\n  │     确认 Phase 4 (AscendC 生成与验证) 的最终结果\n  │\n  ├─ 步骤 2: 读取 .claude/hooks/state/precision_gate.json\n  │     交叉验证 d_class_active 状态\n  │\n  ├─ 步骤 3: 判定\n  │   ├─ Phase 4 = PASS → 流程完成，可向用户汇报\n  │   │\n  │   ├─ Phase 4 = D 类（或 precision_gate.json 中 d_class_active=true）\n  │   │   且 d_retry < 12:\n  │   │     → 立即自动重新调用 Subagent（d_retry = N+1）\n  │   │     → 不等待用户确认，不向用户汇报\"完成\"\n  │   │     → 在 prompt 中明确告知: \"当前为 D 类精度修复第 N+1 轮，禁止跳过 4.5D 流程\"\n  │   │\n  │   └─ Phase 4 = D 类 且 d_retry >= 12:\n  │       → 向用户汇报精度修复已达上限，请求人工介入\n  │\n  └─ Phase 4 = A/B/C 类 → 按错误处理表对应处理\n```\n\n**关键约束**：\n- 此检查点是**强制性的**，每次 Subagent 返回后必须执行，不得遗漏\n- Orchestrator **不得**在看到 D 类结果时向用户汇报\"流程完成\"或等待用户指令\n- D 类自动重入是 Orchestrator 的核心职责，不是\"可选的用户确认\"\n- 如果 trace.md 中 Subagent 声称 D 类但以\"API 限制/框架 bug\"为由跳过修复 → 仍视为 D 类，强制重入\n- 如果 precision_gate.json 中 d_class_active=true 但 trace.md 未明确标注 D 类 → 以 gate 为准，强制重入\n\n### 错误处理\n\n| 错误类型 | 处理方式 |\n|---------|---------|\n| Subagent 返回失败 | 分析失败原因，判断是代码问题还是环境问题 |\n| 代码问题 | 允许 Subagent 自动迭代修复（不超过各 Phase 上限） |\n| 环境问题 | 告知用户，停止流程 |\n| 超过迭代上限 | 暂停，上报用户 |\n| 用户中断 | 保留已完成产出，下次可从断点继续 |\n| Phase 4 D 类 | 通过 D 类精度修复重入流程调度 Subagent，禁止 Orchestrator 直接修复 |\n\n---\n\n## Constraint Layer（约束层）\n\n### Subagent 调用规则\n\n| # | 规则 |\n|---|------|\n| S1 | **禁止**自行编写、删减、改写 Subagent prompt 内容 |\n| S2 | **禁止**在 Subagent prompt 中内联设计文档内容 |\n| S3 | **禁止**跳过 Phase 直接开始后续工作 |\n\n### 高风险行为限制\n\n- TileLang 退化检测连续 ≥ 3 次 → 自动终止\n- 简单算子 REVIEW.md 修复循环上限 3 轮 → 超限暂停\n- TileLang 性能迭代（Phase 3 Step 4）p_retry 上限 3 轮 → 超限必须产出 final_report.md（含上限分析）后继续，不阻塞流程；禁止以\"连续无提升\"为由空报终止\n- AscendC Phase 4 迭代: A 类（编译/运行时错误）上限 5 次（a_retry），D 类（精度不匹配）上限 D1 7 次 + D2 5 次 = 12 次（d_retry）。A/D 计数器相互独立，A 类用完后若转入 D 类则 D 类从 0 开始有完整 12 次机会。\n- 禁止修改 `{output_dir}/` 之外的任何文件\n- TileLang 功能验证（evaluate_tilelang.sh）默认必须执行且精度必须通过——精度通过是 Phase 3 Step 4 性能迭代的强制前置；仅当对照实验证明属 TileLang 编译器/框架底层不支持时才可跳过（需记录证据）并继续 Phase 4，其余失败必须迭代修复\n- 禁止手动修改或删除 `.claude/hooks/state/precision_gate.json`（由 Hook 自动管理，绕过即违规）\n\n---\n\n## 参考资料\n\n### 仲裁参考资源\n\n| 资源类型 | 路径 | 说明 |\n|---------|------|------|\n| API 文档 | `asc-devkit/docs/zh/api/` | 仲裁 API 争议时查阅 |\n| 官方示例 | `asc-devkit/examples/` | 仲裁开发争议时参考 |\n| 精度调试 Skill | `/tilelang2ascend-precision-tuning` | 仲裁精度争议时参考 |\n| 性能采集 Skill | `/ops-profiling` | 仲裁性能争议时参考 |\n| 历史成功任务 | `workflows/templates/archive_tasks/` | 仲裁开发模式争议时参考 |\n| 演进知识库 | 共享 OKF 知识库 `$CANNBOT_KNOWLEDGE_ROOT`（当前 `/home/asc-gen-knowledge`，配置于 `~/.config/cannbot/knowledge.env`）的 `runbooks/` 树；**检索一律经 `knowledge-query` skill**（preflight/search，禁自维护索引），**沉淀一律经 `ops-knowledge-ingest` skill 路由** | 历史走偏点与成功模式（OKF kind：implementation_trap/operator_optimization，维度走 tags），生成前 preflight 检索可规避已知坑 |\n\n### TileLang 设计阶段 Skill 依赖（复杂算子路径）\n\n> 以下 Skill 由 `tilelang2ascend-tilelang-designer` 在设计阶段引用，提供设计方法论、编码规范和性能避坑指导。\n\n| Skill | 用途 | 使用阶段 |\n|-------|------|----------|\n| `ops/tilelang-op-design/SKILL.md` | 算子设计文档生成：技术约束检测、编程模式决策树、信息收集、Block 级设计 | Phase 3 Step 1 |\n| `ops/tilelang-op-develop/SKILL.md` | 算子代码生成：编码规范、GEMM/CV 融合、V 核并行化、TileLang 编程指南 | Phase 3 Step 2 |\n| `ops/tilelang-perf-optimization/SKILL.md` | 性能优化：反模式清单、优化指南、CV 同步调试、Cube 高级策略 | Phase 3 Step 1e, 2e（设计门禁）+ Step 4（性能迭代本体） |\n# currentDate\nToday's date is 2026/10/15.\n\n      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.\n</system-reminder>\n\n\n\n## 任务：开发 AscendC 算子\n\n### 参数\n- **npu**: 10 (Ascend 910B)\n- **算子描述文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py\n- **测试用例文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.json\n- **输出目录**: /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/\n\n### 算子信息\n- 算子名称: Add (torch.add)\n- 算子类型: 简单算子（逐元素加法，含广播支持）\n- 开发路径: ops-direct-invoke\n- 输入: x (Tensor), y (Tensor, 可与 x 广播), alpha (float, 可选)\n- 输出: x + alpha * y\n- 数据类型: float32, float16, bfloat16\n- 测试用例数: 50 个\n\n### 要求\n请按照 7 Phase 工作流执行端到端开发：\n- Phase 0: 参数确认 + 算子分类\n- Phase 1: 环境准备 + 工程初始化\n- Phase 2: Case 精简\n- Phase 3: 设计表达（简单算子路径：DESIGN.md + PLAN.md + WALKTHROUGH.md）\n- Phase 4: AscendC 生成与验证（渐进式开发 + REVIEW.md + 最多 3 轮修复）\n- Phase 5: 性能分析\n- Phase 6: 全量验证\n- Phase 7: Trace 记录 + 知识演进\n\n输出目录已创建: /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/"
+    },
+    {
+      "role": "assistant",
+      "content": "The user wants me to develop an AscendC operator following the 7-phase workflow. Let me start by understanding the task:\n\n- **Operator**: Add (torch.add) - element-wise addition with broadcasting support\n- **Type**: Simple operator → ops-direct-invoke path\n- **NPU**: 10 (Ascend 910B)\n- **Input**: x (Tensor), y (Tensor, broadcastable with x), alpha (float, optional)\n- **Output**: x + alpha * y\n- **Data types**: float32, float16, bfloat16\n- **Test cases**: 50 cases\n\nLet me start the workflow step by step. First, I'll read the operator description file and test case file, then proceed through each phase.\n\nActually, wait - the output directory already exists (`/home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/`). Let me check what's already there and then kick off the workflow.\n\nThe workflow calls for using the `ascend-kernel-developer` Subagent. But as the orchestrator (CANNBot), I need to manage the phases and dispatch the subagent. Let me start by examining the existing state and then proceed.\n\nActually, re-reading the instructions more carefully: the user is asking ME to execute the full 7-phase workflow. The CLAUDE.md describes that CANNBot orchestrates and dispatches to `ascend-kernel-developer`. But in this context, I think the user wants me to act as the full workflow executor.\n\nLet me start by checking the output directory and then proceeding through each phase. I'll need to:\n1. Phase 0: Confirm parameters and classify operator (simple → ops-direct-invoke)\n2. Phase 1: Environment setup + project initialization\n3. Phase 2: Case simplification\n4. Phase 3: Design expression (DESIGN.md + PLAN.md + WALKTHROUGH.md for simple ops)\n5. Phase 4: AscendC generation + verification (progressive dev + REVIEW.md + 3-round fix)\n6. Phase 5: Performance analysis\n7. Phase 6: Full verification\n8. Phase 7: Trace recording + knowledge evolution\n\nLet me begin!\n</think>\n\n好的，我来启动 AscendC 算子开发工作流。先检查输出目录和现有状态。",
+      "tool_calls": [
+        {
+          "id": "call_e049f21a82364b7789dfe6f5",
+          "type": "function",
+          "function": {
+            "name": "Bash",
+            "arguments": "{\"command\": \"ls -la /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/ 2>/dev/null || echo \\\"目录不存在\\\"\", \"description\": \"检查输出目录是否存在\"}"
+          }
+        },
+        {
+          "id": "call_895718b5b21d481c8755abd6",
+          "type": "function",
+          "function": {
+            "name": "Bash",
+            "arguments": "{\"command\": \"ls /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.json 2>/dev/null && echo \\\"算子文件和测试用例存在\\\"\", \"description\": \"检查算子描述文件和测试用例\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_895718b5b21d481c8755abd6",
+      "content": "/home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.json\n/home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py\n算子文件和测试用例存在"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_e049f21a82364b7789dfe6f5",
+      "content": "total 8\ndrwxr-xr-x  2 root root 4096 Oct 15 16:54 .\ndrwxr-xr-x 12 root root 4096 Oct 15 16:54 .."
+    },
+    {
+      "role": "assistant",
+      "content": "The output directory exists but is empty. The operator file and test cases exist. This is a fresh start. Let me proceed through all 7 phases.\n\nSince this is a simple operator (Add - element-wise addition), the path is ops-direct-invoke:\n- Phase 3: DESIGN.md + PLAN.md + WALKTHROUGH.md\n- Phase 4: Progressive development + REVIEW.md + 3-round fix\n\nI need to dispatch to the `ascend-kernel-developer` subagent. But actually, re-reading the CLAUDE.md, it seems like CANNBot (the orchestrator) dispatches to ascend-kernel-developer (the worker). The orchestrator manages the phases and monitors progress.\n\nHowever, in this interactive context, I think the most practical approach is for me to execute the full workflow directly. Let me proceed through each phase step by step.\n\nActually, let me reconsider. The CLAUDE.md is very explicit about the separation:\n- CANNBot (orchestrator): receives requirements, classifies operators, dispatches subagents, monitors progress\n- ascend-kernel-developer (subagent): executes the actual development work\n\nThe proper pattern would be for me to dispatch to the subagent and have it execute the phases. But the issue is that I need to see the results to continue the workflow (especially for Phase 4 fixes and beyond).\n\nLet me take a pragmatic approach: I'll execute the full workflow directly since we're in an interactive session. This means I'll do the design, write the code, run the tests, and iterate through all phases.\n\nLet me start from Phase 0 and proceed through all 7 phases. I'll use the BA (Bash) tool for commands and the Write/Edit tools for file manipulation.\n\nActually wait, let me reconsider again. The task says \"请按照 7 Phase 工作流执行端到端开发\". This clearly asks for the full workflow to be executed. The most efficient way in this context is for me to do it all directly.\n\nLet me start!\n\nPhase 0: 参数确认 + 算子分类\n- npu: 10 (Ascend 910B) ✓\n- op_file: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py ✓\n- output_dir: /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/ ✓\n- 算子分类: Add 是逐元素加法 → 简单算子 → ops-direct-invoke 路径 ✓\n\nPhase 1: 环境准备 + 工程初始化\n- 复制算子文件到 output_dir\n- 初始化 kernel 工程\n- 算子注册\n\nPhase 2: Case 精简\n- 使用 tilelang2ascend-case-simplifier 精简 50 个测试用例\n\nPhase 3: 设计表达（简单算子路径）\n- 生成 DESIGN.md\n- 生成 PLAN.md\n- 生成 WALKTHROUGH.md\n\nPhase 4: AscendC 生成与验证\n- 渐进式开发 AscendC kernel\n- 代码审查（REVIEW.md）\n- 最多 3 轮修复\n\nPhase 5: 性能分析\n- 使用 ops-profiling --quick 模式\n\nPhase 6: 全量验证\n- 恢复全量用例并验证\n\nPhase 7: Trace 记录 + 知识演进\n- 生成 trace.md\n- 知识演进到 runbooks/\n\nLet me start executing! I'll go through each phase sequentially and report progress.\n\nActually, let me be more efficient. Let me start with Phase 1 (copying files and initializing the project) and Phase 2 (case simplification) in parallel since they're independent. Then proceed through the rest.\n\nNo wait, Phase 2 depends on having the test cases in the output directory, which happens in Phase 1. Let me keep the sequential order but be efficient within each phase.\n\nLet me start with Phase 0/Phase 1.\n</think>\n\n输出目录为空，全新开始。算子分类：**Add（逐元素加法）→ 简单算子 → ops-direct-invoke 路径**。\n\n现在启动 `ascend-kernel-developer` Subagent 执行端到端开发。",
+      "tool_calls": [
+        {
+          "id": "call_db2929275975420181f23f71",
+          "type": "function",
+          "function": {
+            "name": "Agent",
+            "arguments": "{\"description\": \"Add算子端到端开发\", \"prompt\": \"\\n你是 ascend-kernel-developer Subagent，负责执行 AscendC 算子的端到端开发。\\n\\n## 任务参数\\n\\n- **npu**: 10 (Ascend 910B)\\n- **算子描述文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py\\n- **测试用例文件**: /home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.json\\n- **输出目录**: /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/\\n- **算子名称**: Add (torch.add)\\n- **算子类型**: 简单算子（逐元素加法，含广播支持）\\n- **开发路径**: ops-direct-invoke（简单算子路径）\\n- **输入**: x (Tensor), y (Tensor, 可与 x 广播), alpha (float, 可选)\\n- **输出**: x + alpha * y\\n- **数据类型**: float32, float16, bfloat16\\n- **测试用例数**: 50 个\\n\\n## 算子分类\\n\\nAdd 是逐元素加法算子，属于**简单算子**，走 **ops-direct-invoke** 路径：\\n- Phase 3: 使用 DESIGN.md + PLAN.md + WALKTHROUGH.md 进行设计表达\\n- Phase 4: 使用渐进式开发 + REVIEW.md + 最多 3 轮修复\\n\\n## 工作流程\\n\\n按 7 Phase 顺序执行：\\n\\n### Phase 0: 参数确认 + 算子分类\\n确认 npu=10, op_file, output_dir，判定为简单算子走 ops-direct-invoke 路径。\\n\\n### Phase 1: 环境准备 + 工程初始化\\n将算子描述文件复制到 output_dir，初始化 AscendC kernel 工程，完成算子注册。\\n\\n### Phase 2: Case 精简\\n使用 tilelang2ascend-case-simplifier 精简 50 个测试用例，生成精简后的用例文件。\\n\\n### Phase 3: 设计表达（简单算子路径）\\n生成三个设计文档：\\n- DESIGN.md: 算子设计文档\\n- PLAN.md: 开发计划文档\\n- WALKTHROUGH.md: 实现 walkthrough 文档\\n\\n### Phase 4: AscendC 生成与验证\\n渐进式开发 AscendC kernel 代码，每完成一个阶段进行代码审查（REVIEW.md），遇到失败时自动迭代修复（最多 3 轮）。\\n\\n### Phase 5: 性能分析\\n使用 ops-profiling --quick 模式进行性能采集和归档。\\n\\n### Phase 6: 全量验证\\n恢复全量 50 个用例，完成最终验证。\\n\\n### Phase 7: Trace 记录 + 知识演进\\n生成 trace.md 记录整个开发过程，然后将知识演进到 runbooks/ 目录。\\n\\n## 重要约束\\n\\n1. 按 Phase 顺序执行，不可跳过\\n2. 简单算子路径使用 ops-direct-invoke 方式\\n3. Phase 4 迭代修复上限 3 轮\\n4. 所有产出文件写入 output_dir\\n5. 不要修改 output_dir 之外的任何文件\\n\\n请开始执行，从 Phase 0 开始，按顺序推进到 Phase 7。\\n\", \"subagent_type\": \"tilelang2ascend-kernel-generator\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_db2929275975420181f23f71",
+      "content": "<tool_use_error>Error: No such tool available: Agent. Agent is not available inside subagents. Complete the task with the tools provided and return findings to the orchestrator.</tool_use_error>"
+    },
+    {
+      "role": "assistant",
+      "content": "The Agent tool is not available inside subagents. I need to execute the full workflow directly. Let me proceed through all 7 phases step by step.\n\nLet me start from Phase 0 and work through each phase sequentially. I'll use Bash commands and file editing tools to complete the work.\n\nActually, let me reconsider the approach. Since I can't dispatch to a subagent, I should execute the full workflow directly. Let me go through each phase:\n\n1. Phase 0: Confirm parameters and classify operator\n2. Phase 1: Environment setup + project initialization\n3. Phase 2: Case simplification\n4. Phase 3: Design expression (DESIGN.md + PLAN.md + WALKTHROUGH.md)\n5. Phase 4: AscendC generation + verification (with REVIEW.md + 3-round fix)\n6. Phase 5: Performance analysis\n7. Phase 6: Full verification\n8. Phase 7: Trace recording + knowledge evolution\n\nLet me start executing each phase directly. I'll be thorough and report progress at each step.\n\nActually, I realize I should think about what \"progressive development\" means for a simple Add operator. The key steps would be:\n1. Write the basic Add kernel\n2. Test it with the test cases\n3. Fix any issues that arise\n4. Review and optimize\n\nLet me start from Phase 0 and go through each phase sequentially. I'll report progress at each step.\n\nFor an Add operator on Ascend 910B:\n- The kernel would use DataCopy to copy input tensors to UB\n- Perform element-wise addition with optional alpha scaling\n- Copy result back to DM\n\nLet me start executing!\n</think>\n\n明白了，我需要直接执行完整工作流。让我从 Phase 0 开始，按顺序推进到 Phase 7。\n\n## Phase 0: 参数确认 + 算子分类",
+      "tool_calls": [
+        {
+          "id": "call_4568f804b1b94c459260acc4",
+          "type": "function",
+          "function": {
+            "name": "Bash",
+            "arguments": "{\"command\": \"mkdir -p /home/s00910136/sft_result/sft_YaRN_525k_14995/1015/level1/3_Add/\", \"description\": \"创建输出目录\"}"
+          }
+        },
+        {
+          "id": "call_4afa10b5c1564bf294a71131",
+          "type": "function",
+          "function": {
+            "name": "Read",
+            "arguments": "{\"file_path\": \"/home/s00910136/benchmarks/NPUKernelBench//level1/3_Add.py\"}"
+          }
+        }
+      ]
+    }
+  ]
+}
